@@ -32,7 +32,7 @@
 #' @format Shapefile
 #' @description This dataset is a subset of the Terrestrial Ecoregions
 #'  shapefile made by the Nature Conservancy
-#' @source \url{http://maps.tnc.org/gis_data.html}
+#' @source \url{https://geospatial.tnc.org}
 "ecoregions"
 
 #' @title Protected areas dataset in raster format
@@ -43,5 +43,5 @@
 #'  used in Khoury et al., (2019)
 #' @references
 #' Khoury et al. (2019) Ecological Indicators 98:420-429. doi: 10.1016/j.ecolind.2018.11.016
-#' @source \url{https://www.protectedplanet.net/}
+#' @source \url{https://www.protectedplanet.net/en}
 "ProtectedAreas"

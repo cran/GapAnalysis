@@ -8,7 +8,7 @@
 Shapefile
 }
 \source{
-\url{http://maps.tnc.org/gis_data.html}
+\url{https://geospatial.tnc.org}
 }
 \usage{
 ecoregions
