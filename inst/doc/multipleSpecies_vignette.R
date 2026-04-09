@@ -1,0 +1,678 @@
+## ----setup, include=FALSE-----------------------------------------------------
+knitr::opts_chunk$set(echo = TRUE)
+# Check for pandoc and knitr status
+has_pandoc <- rmarkdown::pandoc_available()
+save_outputs <- !isTRUE(getOption('knitr.in.progress')) && has_pandoc
+
+## ----load-libraries-and-data--------------------------------------------------
+# ── Load libraries ─────────────────────────────────────────────────────────────
+library(GapAnalysis)
+library(dplyr)
+library(tidyr)
+library(stringr)
+library(terra)
+library(leaflet)
+library(openxlsx)
+library(ggplot2)
+library(ggtext)
+library(cowplot)
+library(htmltools)
+library(htmlwidgets)
+library(kableExtra)
+
+# ── Set outputs folder ────────────────────────────────────────────────────────
+# NOTE: This path must match the path set in the knit: field in the YAML header
+# All files will be saved here. Update both locations if changing the path, e.g.:
+#outputs_folder <- "C:/Users/you/Desktop/GapAnalysis/outputs"
+outputs_folder <- "outputs"
+if (!dir.exists(outputs_folder)) dir.create(outputs_folder)
+
+# ── Source functions from GapAnalysis repo (alternative method) ───────────────
+#files <- list.files("R", pattern = "\\.[rR]$", full.names = TRUE)
+#for (f in files) source(f)
+
+# ── Load data from GapAnalysis repo (alternative method) ─────────────────────
+#load("data/CucurbitaData.rda")      # Occurrence data
+#load("data/CucurbitaRasts.rda")     # Raster list
+#load("data/ProtectedAreas.rda")     # Protected areas raster
+#load("data/ecoregions.rda")         # Ecoregions data
+
+# ── Load your own data ────────────────────────────────────────────────────────
+# NOTE: To use your own occurrence data and SDM rasters, remove the hashes
+# below and update the file paths.
+#occData <- read.csv("path/to/your_occurrences.csv") # Local occurrence data
+#sdms <- list(                                  # Local rasters read in as list
+#   rast("path/to/species1_sdm.tif"),
+#   rast("path/to/species2_sdm.tif"))
+# NOTE: To download protected areas and ecoregions data locally, run getDatasets(). 
+# This requires an active internet connection.
+#getDatasets()          # Local download of protected areas and ecoregions data
+
+# ── Load example Cucurbita data (GapAnalysis library) ────────────────────────
+# NOTE: To use your own data, hash out the two lines below.
+occData <- CucurbitaData                  
+sdms    <- terra::unwrap(CucurbitaRasts)
+
+# ── Prepare spatial layers ────────────────────────────────────────────────────
+ecos     <- terra::vect(ecoregions)
+proAreas <- terra::unwrap(ProtectedAreas)
+
+# Standardize CRS across all spatial layers to prevent mismatch warnings
+target_crs <- "+proj=longlat +datum=WGS84"
+ecos     <- terra::project(ecos, target_crs)
+proAreas <- terra::project(proAreas, target_crs)
+
+# ── Prepare species list and SDM rasters ──────────────────────────────────────
+taxa    <- unique(occData$species)
+sdmList <- lapply(seq_along(taxa), function(i) {
+  r <- sdms[[i]]
+  if (terra::crs(r, proj = TRUE) != terra::crs(ecos, proj = TRUE)) {
+    r <- terra::project(r, terra::crs(ecos))
+  }
+  r <- terra::subst(r, 0, NA)
+  r[!(is.na(r) | r == 1)] <- NA
+  r
+})
+names(sdmList) <- taxa
+
+# Confirm species names
+message("\nConfirm species for gap analysis:\n", paste(taxa, collapse = "\n"))
+
+## ----run-gap-analysis---------------------------------------------------------
+results_list <- list()
+
+for (i in seq_along(taxa)) {
+  taxon          <- taxa[i]
+  occurrenceData <- occData[occData$species == taxon, ]
+  sdm            <- sdms[[i]]
+
+  if (terra::crs(sdm, proj = TRUE) != terra::crs(ecos, proj = TRUE)) {
+    sdm <- terra::project(sdm, terra::crs(ecos))
+  }
+  sdm <- terra::subst(sdm, 0, NA)
+  sdm[!(is.na(sdm) | sdm == 1)] <- NA
+
+  # 1. Run SRSex first (on all records)
+  srsex <- SRSex(taxon = taxon, occurrenceData = occurrenceData)
+
+  # 2. Check inputs
+  occurrences     <- checkOccurrences(csv = occurrenceData, taxon = taxon)
+  if (!inherits(sdm, "SpatRaster")) stop("sdm is not a SpatRaster")
+  sdm_checked     <- checksdm(sdm)
+  proArea_cropped <- terra::crop(proAreas, terra::ext(sdm_checked))
+  proArea_checked <- checkProtectedAreas(protectedArea = proArea_cropped,
+                                         sdm           = sdm_checked)
+
+  # Skip species if SDM raster has no values
+  if (all(is.na(terra::values(sdm_checked)))) {
+    message("Skipping ", taxon, ": SDM raster has no values.")
+    next
+  }
+
+  # 3. Generate G buffers
+  gBuffer <- generateGBuffers(
+    taxon          = taxon,
+    occurrenceData = occurrences$data,
+    bufferDistM    = 50000
+  )
+
+  # 4. Ex-situ analysis
+  grsex <- GRSex(taxon = taxon, sdm = sdm_checked, gBuffer = gBuffer)
+  ersex <- ERSex(
+    taxon          = taxon,
+    sdm            = sdm_checked,
+    occurrenceData = occurrences$data,
+    gBuffer        = gBuffer,
+    ecoregions     = ecos,
+    idColumn       = "ECO_NAME"
+  )
+  fcsex <- FCSex(taxon = taxon, srsex = srsex, grsex = grsex, ersex = ersex)
+
+  # 5. In-situ analysis
+  srsin <- SRSin(
+    taxon          = taxon,
+    sdm            = sdm_checked,
+    occurrenceData = occurrences$data,
+    protectedAreas = proArea_checked
+  )
+  grsin <- GRSin(taxon = taxon, sdm = sdm_checked, protectedAreas = proArea_checked)
+  ersin <- ERSin(
+    taxon          = taxon,
+    sdm            = sdm_checked,
+    occurrenceData = occurrences$data,
+    protectedAreas = proArea_checked,
+    ecoregions     = ecos,
+    idColumn       = "ECO_NAME"
+  )
+  fcsin   <- FCSin(taxon = taxon, srsin = srsin, grsin = grsin, ersin = ersin)
+  fcsmean <- FCSc_mean(taxon = taxon, fcsin = fcsin, fcsex = fcsex)
+
+  # 6. Store results
+  results_list[[taxon]] <- list(
+    srsex           = srsex,
+    occurrences     = occurrences,
+    sdm_checked     = sdm_checked,
+    proArea_checked = proArea_checked,
+    eco_checked     = ecoregions,
+    grsex           = grsex,
+    ersex           = ersex,
+    fcsex           = fcsex,
+    srsin           = srsin,
+    grsin           = grsin,
+    ersin           = ersin,
+    fcsin           = fcsin,
+    fcsmean         = fcsmean
+  )
+}
+
+## ----results-tables-----------------------------------------------------------
+# ── Ex-situ metrics ───────────────────────────────────────────────────────────
+exsitu_table <- do.call(rbind, lapply(names(results_list), function(taxon) {
+  r <- results_list[[taxon]]
+  data.frame(
+    Species          = taxon,
+    SRS_exsitu       = r$srsex$`SRS exsitu`,
+    GRS_exsitu       = r$fcsex$`GRS exsitu`,
+    ERS_exsitu       = r$fcsex$`ERS exsitu`,
+    FCS_exsitu       = r$fcsex$`FCS exsitu`,
+    # NOTE: "FCS existu score" is a known typo in the GapAnalysis package.
+    # Update to "FCS exsitu score" when fixed upstream.
+    FCS_exsitu_score = r$fcsex$`FCS existu score`
+  )
+}))
+
+# ── In-situ metrics ───────────────────────────────────────────────────────────
+insitu_table <- do.call(rbind, lapply(names(results_list), function(taxon) {
+  r <- results_list[[taxon]]
+  data.frame(
+    Species          = taxon,
+    SRS_insitu       = r$fcsin$`SRS insitu`,
+    GRS_insitu       = r$fcsin$`GRS insitu`,
+    ERS_insitu       = r$fcsin$`ERS insitu`,
+    FCS_insitu       = r$fcsin$`FCS insitu`,
+    FCS_insitu_score = r$fcsin$`FCS insitu score`
+  )
+}))
+
+# ── Combined metrics ──────────────────────────────────────────────────────────
+combined_table <- do.call(rbind, lapply(names(results_list), function(taxon) {
+  r <- results_list[[taxon]]
+  data.frame(
+    Species         = taxon,
+    FCSc_min        = r$fcsmean$FCSc_min,
+    FCSc_max        = r$fcsmean$FCSc_max,
+    FCSc_mean       = r$fcsmean$FCSc_mean,
+    FCSc_min_class  = r$fcsmean$FCSc_min_class,
+    FCSc_max_class  = r$fcsmean$FCSc_max_class,
+    FCSc_mean_class = r$fcsmean$FCSc_mean_class
+  )
+}))
+
+knitr::kable(exsitu_table,   digits = 2, caption = "<span style='text-align:left; display:block;'>Ex-situ gap analysis metrics</span>",  format = "html") %>% kableExtra::kable_styling()
+knitr::kable(insitu_table,   digits = 2, caption = "<span style='text-align:left; display:block;'>In-situ gap analysis metrics</span>",   format = "html") %>% kableExtra::kable_styling()
+knitr::kable(combined_table, digits = 2, caption = "<span style='text-align:left; display:block;'>Combined gap analysis metrics</span>",  format = "html") %>% kableExtra::kable_styling()
+
+## ----gap-analysis-figure, include=FALSE, eval=exists("save_outputs") && save_outputs----
+# plot_data <- do.call(rbind, lapply(names(results_list), function(taxon) {
+#   r <- results_list[[taxon]]
+#   data.frame(
+#     ID        = taxon,
+#     SRSex     = as.numeric(r$srsex[["SRS exsitu"]]),
+#     GRSex     = as.numeric(r$grsex$results[["GRS exsitu"]]),
+#     ERSex     = as.numeric(r$ersex$results[["ERS exsitu"]]),
+#     FCSex     = as.numeric(r$fcsex[["FCS exsitu"]]),
+#     SRSin     = as.numeric(r$srsin$results[["SRS insitu"]]),
+#     GRSin     = as.numeric(r$grsin$results[["GRS insitu"]]),
+#     ERSin     = as.numeric(r$ersin$results[["ERS insitu"]]),
+#     FCSin     = as.numeric(r$fcsin[["FCS insitu"]]),
+#     FCSc_mean = as.numeric(r$fcsmean[["FCSc_mean"]])
+#   )
+# }))
+# 
+# header_font_size     <- 7
+# legend_label_font_mm <- 5
+# point_stroke         <- 1.5
+# other_size           <- 4.0
+# fcs_size             <- 6.0
+# fcsc_size            <- 10.5
+# 
+# all_species <- sort(unique(plot_data$ID))
+# format_id <- function(id) {
+#   id |>
+#     str_replace_all(" var\\. ", "</i> var. <i>") |>
+#     str_replace_all(" x ",      "</i> x <i>") |>
+#     (\(x) paste0("<i>", x, "</i>"))()
+# }
+# formatted_species_levels <- format_id(all_species)
+# 
+# plot_data <- plot_data |>
+#   mutate(
+#     ID_italic  = format_id(.data$ID),
+#     ID_ordered = factor(.data$ID_italic, levels = rev(formatted_species_levels))
+#   )
+# 
+# long_df <- plot_data |>
+#   pivot_longer(
+#     cols      = c(SRSex, GRSex, ERSex, FCSex, SRSin, GRSin, ERSin, FCSin,
+#                   FCSc_mean),
+#     names_to  = "metric_raw",
+#     values_to = "x"
+#   ) |>
+#   filter(!is.na(.data$x)) |>
+#   mutate(
+#     metric_base = case_when(
+#       str_detect(.data$metric_raw, "FCSc") ~ "FCSc_mean",
+#       TRUE ~ str_remove(.data$metric_raw, "(ex|in)$")
+#     ),
+#     origin_type = case_when(
+#       str_detect(.data$metric_raw, "in$")  ~ "in situ",
+#       str_detect(.data$metric_raw, "ex$")  ~ "ex situ",
+#       TRUE                                 ~ "combined"
+#     ),
+#     point_size_dynamic = case_when(
+#       .data$metric_base == "FCSc_mean" ~ fcsc_size,
+#       .data$metric_base == "FCS"       ~ fcs_size,
+#       TRUE                             ~ other_size
+#     ),
+#     plot_order = factor(.data$metric_base,
+#                         levels = c("FCSc_mean", "FCS", "SRS", "GRS", "ERS"))
+#   ) |>
+#   arrange(.data$plot_order)
+# 
+# color_map    <- c("FCSc_mean" = "#FF0000", "FCS" = "#000000",
+#                   "SRS"       = "#0000FF", "GRS" = "#800080", "ERS" = "#228B22")
+# shape_map    <- c("combined" = 18, "ex situ" = 16, "in situ" = 17)
+# panel_colors <- c("#ffb4b3", "#ffd380", "#ffff80", "#a8d2a8")
+# 
+# build_panel <- function(data, id_levels) {
+#   num_levels <- length(id_levels)
+#   header_y   <- num_levels + 1.25
+#   ymax       <- num_levels + 2.0
+#   ylim_top   <- num_levels + 2.2
+# 
+#   header_data <- tibble(
+#     x     = c(12.5, 37.5, 62.5, 87.5),
+#     label = c("<b>Urgent<br>Priority</b>", "<b>High<br>Priority</b>",
+#               "<b>Medium<br>Priority</b>", "<b>Low<br>Priority</b>")
+#   )
+# 
+#   ggplot(data, aes(x = .data$x, y = .data$ID_ordered)) +
+#     annotate("rect",
+#              xmin  = c(0, 25, 50, 75), xmax = c(25, 50, 75, 100),
+#              ymin  = 0.5, ymax = ymax,
+#              fill  = panel_colors, alpha = 0.9) +
+#     geom_segment(data = data.frame(y = seq_len(num_levels)),
+#                  aes(x = 0, xend = 100, y = y, yend = y),
+#                  color = "grey75", linewidth = 0.5, inherit.aes = FALSE) +
+#     geom_segment(data = data.frame(x = c(0, 25, 50, 75, 100)),
+#                  aes(x = x, xend = x, y = 0.5, yend = ymax),
+#                  color = "black", linewidth = 1.5, inherit.aes = FALSE) +
+#     geom_hline(yintercept = c(0.5, num_levels + 0.5, num_levels + 2.0),
+#                color = "black", linewidth = 1.5) +
+#     geom_jitter(aes(color = .data$metric_base, shape = .data$origin_type,
+#                     size  = .data$point_size_dynamic),
+#                 stroke = point_stroke, width = 0.7, height = 0) +
+#     geom_richtext(data = header_data,
+#                   aes(x = .data$x, y = header_y, label = .data$label),
+#                   size = header_font_size, color = "black",
+#                   fill = NA, label.color = NA,
+#                   lineheight = 0.9, hjust = 0.5, inherit.aes = FALSE) +
+#     scale_color_manual(values = color_map, guide = "none") +
+#     scale_shape_manual(values = shape_map, guide = "none") +
+#     scale_size_identity() +
+#     scale_x_continuous(breaks = c(0, 25, 50, 75, 100), expand = c(0, 0)) +
+#     scale_y_discrete(drop = FALSE, limits = rev(id_levels)) +
+#     coord_cartesian(xlim = c(0, 100), ylim = c(1, ylim_top), clip = "off") +
+#     theme_minimal_grid() +
+#     theme(
+#       panel.grid   = element_blank(),
+#       axis.title   = element_blank(),
+#       axis.ticks.y = element_blank(),
+#       axis.ticks.x = element_blank(),
+#       axis.text.x  = element_text(size = 16),
+#       axis.text.y  = element_markdown(size = 18, hjust = 1,
+#                                       margin = margin(r = 15)),
+#       plot.margin  = margin(t = 30, r = 20, b = 20, l = 40)
+#     )
+# }
+# 
+# main_plot <- build_panel(long_df, formatted_species_levels)
+# 
+# legend_data <- tribble(
+#   ~label,                           ~x,    ~y,   ~shape,    ~color,     ~symbol_size,         ~label_size,          ~vjust,
+#   "<b>Conservation<br>Status</b>",  0.5,   1.8,  NA_real_,  "black",    NA_real_,             legend_label_font_mm, 1,
+#   "FCSc-mean",                      3.0,   1.7,  18,        "#FF0000",  fcsc_size,            legend_label_font_mm, 0.5,
+#   "FCS ex situ",                    4.8,   1.7,  16,        "black",    fcs_size,             legend_label_font_mm, 0.5,
+#   "SRS ex situ",                    6.6,   1.7,  16,        "#0000FF",  other_size,           legend_label_font_mm, 0.5,
+#   "GRS ex situ",                    8.4,   1.7,  16,        "#800080",  other_size,           legend_label_font_mm, 0.5,
+#   "ERS ex situ",                    10.2,  1.7,  16,        "#228B22",  other_size,           legend_label_font_mm, 0.5,
+#   "FCS in situ",                    4.8,   1.3,  17,        "black",    fcs_size,             legend_label_font_mm, 0.5,
+#   "SRS in situ",                    6.6,   1.3,  17,        "#0000FF",  other_size,           legend_label_font_mm, 0.5,
+#   "GRS in situ",                    8.4,   1.3,  17,        "#800080",  other_size,           legend_label_font_mm, 0.5,
+#   "ERS in situ",                    10.2,  1.3,  17,        "#228B22",  other_size,           legend_label_font_mm, 0.5
+# )
+# 
+# legend_plot <- ggplot(legend_data, aes(x = .data$x, y = .data$y)) +
+#   geom_point(aes(shape = .data$shape, color = .data$color,
+#                  size  = .data$symbol_size), stroke = point_stroke) +
+#   geom_richtext(aes(label = .data$label, x = .data$x + 0.15,
+#                     size  = .data$label_size, vjust = .data$vjust),
+#                 hjust = 0, fill = NA, label.color = NA) +
+#   scale_color_identity() +
+#   scale_shape_identity() +
+#   scale_size_identity() +
+#   theme_void() +
+#   coord_cartesian(xlim = c(0, 11.5), ylim = c(0.5, 2.2))
+# 
+# n_taxa      <- length(formatted_species_levels)
+# plot_height <- max(10, n_taxa * 0.5)
+# final_plot  <- plot_grid(main_plot, legend_plot,
+#                          ncol = 1, rel_heights = c(1, 0.1))
+# 
+# save_plot(
+#   file.path(outputs_folder, "gapAnalysis_conservationPriority_figure.png"),
+#   final_plot,
+#   base_width  = 12,
+#   base_height = plot_height,
+#   dpi         = 300,
+#   bg          = "white")
+# 
+# message("Saved: ",
+#         file.path(outputs_folder, "gapAnalysis_conservationPriority_figure.png"))
+
+## ----save-metrics-excel, include=FALSE, eval=exists("save_outputs") && save_outputs----
+# # ── Build table (1 row per species, all metrics as columns) ───────
+# all_metrics <- do.call(rbind, lapply(names(results_list), function(taxon) {
+#   r <- results_list[[taxon]]
+# 
+#   clean <- function(x) {
+#     df <- as.data.frame(t(unlist(x)))
+#     df <- df[, !grepl("(?i)^(taxon|species)$", names(df)), drop = FALSE]
+#     return(df)
+#   }
+# 
+#   row <- cbind(
+#     data.frame(Taxon = taxon),
+#     clean(r$srsex),
+#     clean(r$grsex$results),
+#     clean(r$ersex$results),
+#     clean(r$fcsex),
+#     clean(r$srsin$results),
+#     clean(r$grsin$results),
+#     clean(r$ersin$results),
+#     clean(r$fcsin),
+#     clean(r$fcsmean)
+#   )
+#   row <- row[, !duplicated(names(row)), drop = FALSE]
+#   return(row)
+# }))
+# 
+# # ── Round numeric columns ─────────────────────────────────────────────────────
+# for (col in names(all_metrics)) {
+#   num <- suppressWarnings(as.numeric(as.character(all_metrics[[col]])))
+#   if (all(is.na(num) == is.na(all_metrics[[col]]))) {
+#     all_metrics[[col]] <- round(num, 2)
+#   }
+# }
+# 
+# # ── Clean column names ────────────────────────────────────────────────────────
+# names(all_metrics) <- gsub("\\.", " ", names(all_metrics))
+# 
+# insert_pos  <- which(names(all_metrics) == "Area in protected ares km2")
+# all_metrics <- cbind(
+#   all_metrics[, seq_len(insert_pos), drop = FALSE],
+#   "Area of model km2" = all_metrics[["Area of model km2"]],
+#   all_metrics[, (insert_pos + 1):ncol(all_metrics), drop = FALSE]
+# )
+# 
+# names(all_metrics) <- dplyr::recode(names(all_metrics),
+#   "FCS existu score"                = "FCS exsitu score",
+#   "Total records in SDM"            = "Total records in model",
+#   "Area in protected ares km2"      = "Area in protected areas km2",
+#   "FCSc_min"                        = "FCS minimum",
+#   "FCSc_max"                        = "FCS maximum",
+#   "FCSc_mean"                       = "FCSc mean",
+#   "FCSc_min_class"                  = "FCS minimum priority category",
+#   "FCSc_max_class"                  = "FCS maximum priority category",
+#   "FCSc_mean_class"                 = "FCS mean priority category",
+#   "Ecoregions with protected areas" = "Ecoregions within protected areas"
+# )
+# 
+# # ── Reorder columns ───────────────────────────────────────────────────────────
+# col_order <- c(
+#   "Taxon", "Total records", "Total with cooordinates",
+#   "Total G records", "G records with coordinates",
+#   "Total H records", "H records with coordinates",
+#   "SRS exsitu", "G buffer areas in model km2", "Area of model km2",
+#   "GRS exsitu", "Ecoregions within G buffer", "Ecoregions with records",
+#   "ERS exsitu", "FCS exsitu", "FCS exsitu score",
+#   "Total Observations", "Records in Protected areas", "Total records in model",
+#   "SRS insitu", "Area in protected areas km2", "Area of model km2",
+#   "GRS insitu", "Ecoregions within protected areas", "Ecoregions within model",
+#   "ERS insitu", "FCS insitu", "FCS insitu score",
+#   "FCS minimum", "FCS maximum", "FCSc mean",
+#   "FCS minimum priority category", "FCS maximum priority category",
+#   "FCS mean priority category"
+# )
+# 
+# names(all_metrics) <- make.unique(names(all_metrics), sep = "__TEMP__")
+# col_order_unique   <- make.unique(col_order,           sep = "__TEMP__")
+# all_metrics        <- all_metrics[, col_order_unique, drop = FALSE]
+# names(all_metrics) <- gsub("__TEMP__\\d+$", "", names(all_metrics))
+# 
+# # ── Write to Excel ────────────────────────────────────────────────────────────
+# wb <- createWorkbook()
+# addWorksheet(wb, "gapAnalysis_results")
+# writeData(wb, "gapAnalysis_results", all_metrics, startRow = 1, startCol = 1)
+# addStyle(wb, "gapAnalysis_results",
+#   style      = createStyle(wrapText = TRUE, textDecoration = "bold"),
+#   rows       = 1,
+#   cols       = seq_len(ncol(all_metrics)),
+#   gridExpand = TRUE
+# )
+# setRowHeights(wb, "gapAnalysis_results", rows = 1, heights = 60)
+# max_width <- max(nchar(as.character(all_metrics$Taxon))) + 2
+# setColWidths(wb, "gapAnalysis_results", cols = 1, widths = max_width)
+# saveWorkbook(wb,
+#   file      = file.path(outputs_folder, "gapAnalysis_results.xlsx"),
+#   overwrite = TRUE
+# )
+# message("Saved: ", file.path(outputs_folder, "gapAnalysis_results.xlsx"))
+
+## ----map-helper, include=FALSE------------------------------------------------
+clean_map <- function(map, occurrenceData = NULL, taxon = NULL) {
+
+  legend_call <- Filter(
+    function(c) !is.null(c$method) && c$method == "addLegend",
+    map$x$calls
+  )
+  labels    <- if (length(legend_call) > 0) legend_call[[1]]$args[[1]][["labels"]] else NULL
+  is_insitu <- !is.null(labels) && any(grepl("Protected", labels))
+
+  if (is_insitu) {
+    layer_groups <- c("All ecos", "Eco gaps", "Distribution", "Protected areas")
+  } else {
+    layer_groups <- c("All ecos", "Eco gaps", "Distribution", "G buffer")
+  }
+
+  poly_idx <- 0
+  map$x$calls <- lapply(map$x$calls, function(call) {
+    if (!is.null(call$method) && call$method == "addPolygons") {
+      poly_idx <<- poly_idx + 1
+      if (poly_idx <= 2) call$args[[3]] <- layer_groups[poly_idx]
+    }
+    call
+  })
+
+  raster_idx <- 0
+  map$x$calls <- lapply(map$x$calls, function(call) {
+    if (!is.null(call$method) && call$method == "addRasterImage") {
+      raster_idx <<- raster_idx + 1
+      call$args[[4]] <- layer_groups[2 + raster_idx]
+    }
+    call
+  })
+
+  map$x$calls <- Filter(function(call) {
+    !(!is.null(call$method) && call$method == "addCircleMarkers")
+  }, map$x$calls)
+
+  map$x$calls <- Filter(function(call) {
+    !(!is.null(call$method) && call$method == "addLegend")
+  }, map$x$calls)
+
+  map$x$calls <- Filter(function(call) {
+    if (!is.null(call$method) && call$method == "addControl") {
+      html <- call$args[[1]]
+      if (is.character(html) && grepl("Ecoregions", html, ignore.case = TRUE)) {
+        return(FALSE)
+      }
+    }
+    TRUE
+  }, map$x$calls)
+
+  if (!is.null(occurrenceData) && !is.null(taxon)) {
+    occ   <- occurrenceData[occurrenceData$species == taxon, ]
+    h_pts <- occ[occ$type == "H", ]
+    g_pts <- occ[occ$type == "G", ]
+
+    if (nrow(h_pts) > 0) {
+      map <- map |>
+        leaflet::addCircleMarkers(
+          lng     = h_pts$longitude,
+          lat     = h_pts$latitude,
+          radius  = 2,
+          color   = "#1184d4",
+          opacity = 1,
+          group   = "H points (herbarium)"
+        )
+    }
+    if (nrow(g_pts) > 0) {
+      map <- map |>
+        leaflet::addCircleMarkers(
+          lng     = g_pts$longitude,
+          lat     = g_pts$latitude,
+          radius  = 2,
+          color   = "#6300f0",
+          opacity = 1,
+          group   = "G points (genebank)"
+        )
+    }
+  }
+
+  all_groups <- c(layer_groups, "H points (herbarium)", "G points (genebank)")
+
+  map <- map |>
+    leaflet::addLayersControl(
+      overlayGroups = all_groups,
+      options       = layersControlOptions(collapsed = FALSE)
+    )
+
+  map <- htmlwidgets::onRender(map, "
+    function(el, x) {
+      setTimeout(function() {
+        el.querySelectorAll('.leaflet-control-layers-overlays').forEach(function(s) {
+          var prev = s.previousElementSibling;
+          if (prev) prev.remove();
+        });
+        el.querySelectorAll('.leaflet-bottom.leaflet-left .leaflet-control')
+          .forEach(function(c) { c.remove(); });
+      }, 300);
+    }
+  ")
+
+  map
+}
+
+## ----render-maps, include=FALSE-----------------------------------------------
+for (taxon in names(results_list)) {
+  cat("###", taxon, "\n\n")
+
+  print(htmltools::tagList(
+    clean_map(
+      map            = results_list[[taxon]]$ersex$map,
+      occurrenceData = occData,
+      taxon          = taxon
+    )
+  ))
+  cat("\n\n***\n\n")
+
+  print(htmltools::tagList(
+    clean_map(
+      map            = results_list[[taxon]]$ersin$map,
+      occurrenceData = occData,
+      taxon          = taxon
+    )
+  ))
+  cat("\n\n***\n\n")
+}
+
+## ----save-maps-as-html, include=FALSE, eval=exists("save_outputs") && save_outputs----
+# outputs_abs <- normalizePath(outputs_folder)
+# tmp_lib     <- file.path(outputs_abs, "lib_tmp")
+# 
+# for (taxon in names(results_list)) {
+#   clean_name <- tolower(gsub(" ", "_", taxon))
+# 
+#   # Ex-situ map
+#   ersex_map <- clean_map(
+#     map            = results_list[[taxon]]$ersex$map,
+#     occurrenceData = occData,
+#     taxon          = taxon
+#   )
+#   if (!is.null(ersex_map)) {
+#     file_name <- paste0(clean_name, "_exSitu_map.html")
+#     htmlwidgets::saveWidget(
+#       widget        = ersex_map,
+#       file          = file.path(outputs_abs, file_name),
+#       selfcontained = TRUE,
+#       libdir        = tmp_lib
+#     )
+#     if (dir.exists(tmp_lib)) unlink(tmp_lib, recursive = TRUE)
+#     message("Saved: ", file.path(outputs_folder, file_name))
+#   } else {
+#     message("No ex-situ map available for: ", taxon)
+#   }
+# 
+#   # In-situ map
+#   ersin_map <- clean_map(
+#     map            = results_list[[taxon]]$ersin$map,
+#     occurrenceData = occData,
+#     taxon          = taxon
+#   )
+#   if (!is.null(ersin_map)) {
+#     file_name <- paste0(clean_name, "_inSitu_map.html")
+#     htmlwidgets::saveWidget(
+#       widget        = ersin_map,
+#       file          = file.path(outputs_abs, file_name),
+#       selfcontained = TRUE,
+#       libdir        = tmp_lib
+#     )
+#     if (dir.exists(tmp_lib)) unlink(tmp_lib, recursive = TRUE)
+#     message("Saved: ", file.path(outputs_folder, file_name))
+#   } else {
+#     message("No in-situ map available for: ", taxon)
+#   }
+# }
+
+## ----complete-workflow, include=FALSE-----------------------------------------
+message(
+  "\n",
+  "──────────────────────────────────────────────────────────────────────\n",
+  "                WORKFLOW COMPLETE. WELL DONE!\n",
+  "──────────────────────────────────────────────────────────────────────\n",
+  "\n",
+  " >>> TO SAVE WORKFLOW AS HTML: Click the [Knit] button in RStudio <<<\n",
+  "     at the top of the script.\n",
+  "\n",
+  " The HTML will save to the folder specified in the\n",
+  " knit: field of the YAML header.\n",
+  "\n",
+  " To change the save location, update the path in both:\n",
+  "   - the knit: field in the YAML header\n",
+  "   - the outputs_folder variable in Data Preparation\n",
+  "\n",
+  " Review your outputs folder for all saved files.\n",
+  "───────────────────────────────────────────────────────────────────────"
+)
+

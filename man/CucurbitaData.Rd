@@ -5,7 +5,7 @@
 \alias{CucurbitaData}
 \title{Cucurbita occurrences dataset}
 \format{
-A data frame with 1184 rows and 4 variables:
+A data frame with 1203 rows and 4 variables:
 \describe{
   \item{species}{character: Species name}
   \item{latitude}{numeric:Latitude in decimal format}
@@ -14,7 +14,7 @@ A data frame with 1184 rows and 4 variables:
 }
 }
 \source{
-\url{https://dataverse.harvard.edu/dataverse/GapAnalysis}
+\url{doi:10.7910/DVN/B8YOQL}
 }
 \usage{
 CucurbitaData
