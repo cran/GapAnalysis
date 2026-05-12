@@ -58,7 +58,7 @@
 #'
 #'
 #' @references
-#' Khoury et al. (2019) Ecological Indicators 98:420-429. doi: 10.1016/j.ecolind.2018.11.016
+#' Khoury et al. (2019) Ecological Indicators 98:420-429. \doi{10.1016/j.ecolind.2018.11.016}
 #' Carver et al. (2021) GapAnalysis: an R package to calculate conservation indicators using spatial information
 #' @export
 #'
@@ -79,7 +79,7 @@ FCSex <- function(taxon, srsex, grsex, ersex){
                          "GRS exsitu" = grs,
                          "ERS exsitu"= ers,
                          "FCS exsitu"=sp_fcs,
-                         "FCS existu score" = NA)
+                         "FCS exsitu score" = NA)
 
   #assign classes (min)
   if (sp_fcs < 25) {
@@ -91,7 +91,7 @@ FCSex <- function(taxon, srsex, grsex, ersex){
   } else {
     score <- "LP"
   }
-  out_df$"FCS existu score" <- score
+  out_df$"FCS exsitu score" <- score
   return(out_df)
 
 }

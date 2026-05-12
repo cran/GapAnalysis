@@ -34,7 +34,7 @@
 #'
 #'
 #' @references
-#' Khoury et al. (2019) Ecological Indicators 98:420-429. doi: 10.1016/j.ecolind.2018.11.016
+#' Khoury et al. (2019) Ecological Indicators 98:420-429. \doi{10.1016/j.ecolind.2018.11.016}
 #' Carver et al. (2021) GapAnalysis: an R package to calculate conservation indicators using spatial information
 #' @importFrom terra crop expanse
 #' @importFrom dplyr tibble
@@ -54,7 +54,7 @@ GRSin <- function(taxon, sdm, protectedAreas){
   sdmArea <- terra::expanse(sdm,unit = "km")[,2]
   proArea <- terra::expanse(proMask,unit = "km")[,2]
 
-  # calcualte the total area
+  # calculate the total area
   if(proArea == 0){
     grs <- 0
   }else{
@@ -63,7 +63,7 @@ GRSin <- function(taxon, sdm, protectedAreas){
   # return objects
   df_output <- dplyr::tibble(Taxon = taxon,
                    'Area of model km2' = round(sdmArea, digits = 0),
-                   'Area in protected ares km2' = round(proArea, digits = 0),
+                   'Area in protected areas km2' = round(proArea, digits = 0),
                    "GRS insitu" = grs)
 
   map_title <- "<h3 style='text-align:center; background-color:rgba(255,255,255,0.7); padding:2px;'>Protect areas within the SDM</h3>"

@@ -39,7 +39,7 @@
 #'                     )
 #'
 #' @references
-#' Khoury et al. (2019) Ecological Indicators 98:420-429. doi: 10.1016/j.ecolind.2018.11.016
+#' Khoury et al. (2019) Ecological Indicators 98:420-429. \doi{10.1016/j.ecolind.2018.11.016}
 #' Carver et al. (2021) GapAnalysis: an R package to calculate conservation indicators using spatial information
 #' @importFrom terra vect extract
 #' @importFrom dplyr filter tibble
@@ -83,13 +83,19 @@ SRSin <- function(taxon, sdm, occurrenceData,  protectedAreas){
     leaflet::addRasterImage(
       x = sdm,
       colors = "#47ae24"
-    )|>
-    leaflet::addCircleMarkers(
-      data = p1,
-      color = ~color,
-      radius = 1,
-      opacity = 1
-    )|>
+    )
+
+  if (nrow(p1) > 0) {
+    map <- map |>
+      leaflet::addCircleMarkers(
+        data = p1,
+        color = ~color,
+        radius = 1,
+        opacity = 1
+      )
+  }
+
+  map <- map |>
     leaflet::addLegend(
       position = "topright",
       title = "SRS in situ",

@@ -1,6 +1,7 @@
 Package: GapAnalysis
 Title: Conservation Indicators Using Spatial Information
-Version: 2.0.0
+Version: 2.0.2
+Date: 2026-05-12
 Authors@R: c(person("Dan", "Carver", role = c("aut","cre","cph"), comment = c(ORCID = "0000-0002-1344-6357"),
                     email= "carver.dan1@gmail.com"),
              person("Sarah", "Gore",role = c("aut","cph"), comment = c(ORCID = "0000-0003-0511-7884"),
@@ -8,7 +9,7 @@ Authors@R: c(person("Dan", "Carver", role = c("aut","cre","cph"), comment = c(OR
              person("Chrystian", "Sosa",role = c("aut","cph"), comment = c(ORCID = "0000-0002-3734-3248"),
                     email= "chrystiam.sossa@gmail.com"),
              person("Colin", "Khoury", role = c("aut","cph"), comment = c(ORCID = "0000-0001-7893-5744"),
-                    email= "c.khoury@cgiar.org"),
+                    email= "colin.khoury@gmail.com"),
              person("Julian", "Ramirez-Villegas",role = c("aut","cph"), comment = c(ORCID = "0000-0002-8044-583X"),
                     email = "J.R.Villegas@cgiar.org"),
              person("Valentin", "Stefan",role = c("ctb"), email = "valentin.stefan@ufz.de"),
@@ -34,13 +35,13 @@ Imports: dataverse, dplyr, leaflet, terra
 License: GPL-3
 LazyData: true
 Encoding: UTF-8
-RoxygenNote: 7.3.3
 Suggests: sf, knitr, rmarkdown, devtools, remotes, tidyr, stringr,
         openxlsx, ggplot2, ggtext, cowplot, htmltools, htmlwidgets,
         kableExtra
 VignetteBuilder: knitr
+Config/roxygen2/version: 8.0.0
 NeedsCompilation: no
-Packaged: 2026-04-03 14:21:31 UTC; dan
+Packaged: 2026-05-12 15:10:52 UTC; dan
 Author: Dan Carver [aut, cre, cph] (ORCID:
     <https://orcid.org/0000-0002-1344-6357>),
   Sarah Gore [aut, cph] (ORCID: <https://orcid.org/0000-0003-0511-7884>),
@@ -58,4 +59,4 @@ Author: Dan Carver [aut, cre, cph] (ORCID:
   Kaue De Sousa [ctb]
 Maintainer: Dan Carver <carver.dan1@gmail.com>
 Repository: CRAN
-Date/Publication: 2026-04-09 15:30:02 UTC
+Date/Publication: 2026-05-12 15:40:02 UTC

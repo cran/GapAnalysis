@@ -27,16 +27,16 @@
 #'                     )
 #'
 #' @references
-#' Khoury et al. (2019) Ecological Indicators 98:420-429. doi: 10.1016/j.ecolind.2018.11.016
+#' Khoury et al. (2019) Ecological Indicators 98:420-429. \doi{10.1016/j.ecolind.2018.11.016}
 #' Carver et al. (2021) GapAnalysis: an R package to calculate conservation indicators using spatial information
 #' @importFrom dplyr tibble n
 #' @export
 
 SRSex <- function(taxon, occurrenceData) {
-  # generarte the counts data for species
+  # generate the counts data for species
   sp_counts <- generateCounts(taxon = taxon,
                occurrenceData = occurrenceData)
-  # caluse for no h points
+  # clause for no h points
   if(sp_counts$totalGRecords >= 1 & sp_counts$totalHRecords == 0){
     srs <-100
   }
@@ -53,8 +53,7 @@ SRSex <- function(taxon, occurrenceData) {
   #create data.frame with output
   out_df <- dplyr::tibble(Taxon=sp_counts$species,
                        "Total records"=sp_counts$totalRecords,
-                       "Total with cooordinates"=sp_counts$totalUseful,
-                       "Total G records"= sp_counts$totalGRecords,
+                       "Total with coordinates"=sp_counts$totalUseful,                       "Total G records"= sp_counts$totalGRecords,
                        "G records with coordinates"=sp_counts$totalGUseful,
                        "Total H records"=sp_counts$totalHRecords,
                        "H records with coordinates"=sp_counts$totalHUseful,
