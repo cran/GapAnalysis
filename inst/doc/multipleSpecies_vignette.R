@@ -124,7 +124,8 @@ for (i in seq_along(taxa)) {
     occurrenceData = occurrences$data,
     gBuffer        = gBuffer,
     ecoregions     = ecos,
-    idColumn       = "ECO_NAME"
+    idColumn       = "ECO_NAME",
+    limitByPoints  = FALSE
   )
   fcsex <- FCSex(taxon = taxon, srsex = srsex, grsex = grsex, ersex = ersex)
 
@@ -142,7 +143,8 @@ for (i in seq_along(taxa)) {
     occurrenceData = occurrences$data,
     protectedAreas = proArea_checked,
     ecoregions     = ecos,
-    idColumn       = "ECO_NAME"
+    idColumn       = "ECO_NAME",
+    limitByPoints  = FALSE
   )
   fcsin   <- FCSin(taxon = taxon, srsin = srsin, grsin = grsin, ersin = ersin)
   fcsmean <- FCSc_mean(taxon = taxon, fcsin = fcsin, fcsex = fcsex)

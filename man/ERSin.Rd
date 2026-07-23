@@ -4,20 +4,33 @@
 \alias{ERSin}
 \title{Ecological representativeness score in situ}
 \usage{
-ERSin(taxon, sdm, occurrenceData, protectedAreas, ecoregions, idColumn)
+ERSin(
+  taxon,
+  sdm,
+  occurrenceData,
+  protectedAreas,
+  ecoregions,
+  idColumn,
+  limitByPoints = FALSE
+)
 }
 \arguments{
 \item{taxon}{A character object that defines the name of the species as listed in the occurrence dataset}
 
 \item{sdm}{a terra rast object that represented the expected distribution of the species}
 
-\item{occurrenceData}{a data frame of values containing columns for the taxon, latitude, longitude, and type}
+\item{occurrenceData}{a data frame of values containing columns for the taxon, latitude, longitude, and type. Coordinates are assumed to be in the WGS84 (EPSG:4326) coordinate reference system.}
 
 \item{protectedAreas}{A terra rast object the contian spatial location of protected areas.}
 
 \item{ecoregions}{A terra vect object the contains spatial information on all ecoregions of interests}
 
 \item{idColumn}{A character vector that notes what column within the ecoregions object should be used as a unique ID}
+
+\item{limitByPoints}{A boolean parameter (TRUE/FALSE) to determine if you want to limit the ecoregions considered to those with observations present.
+TRUE will exclude all ecoregions with no points within. FALSE will include all ecoregions.
+This was implemented to prevent edge effects where pixels from the distribution extend into
+neighboring ecoregions as a product of differences in raster/vector geometry rather than being predicted there directly.}
 }
 \value{
 A list object containing
@@ -55,7 +68,8 @@ ers_insitu <- ERSin(taxon = taxon,
                     occurrenceData = CucurbitaData,
                     protectedAreas = protectedAreas,
                     ecoregions = ecoregions,
-                    idColumn = "ECO_NAME"
+                    idColumn = "ECO_NAME",
+                    limitByPoints = FALSE
                     )
 
 

@@ -628,7 +628,7 @@ repository.</p>
 <div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" tabindex="-1"></a><span class="fu">library</span>(tidyr)</span>
 <span id="cb5-2"><a href="#cb5-2" tabindex="-1"></a><span class="fu">library</span>(stringr)</span>
 <span id="cb5-3"><a href="#cb5-3" tabindex="-1"></a><span class="fu">library</span>(terra)</span></code></pre></div>
-<pre><code>## terra 1.9.25</code></pre>
+<pre><code>## terra 1.9.34</code></pre>
 <pre><code>## 
 ## Attaching package: &#39;terra&#39;</code></pre>
 <pre><code>## The following object is masked from &#39;package:tidyr&#39;:
@@ -763,64 +763,63 @@ R folder</a>.</strong></p>
 <span id="cb14-43"><a href="#cb14-43" tabindex="-1"></a>    <span class="at">occurrenceData =</span> occurrences<span class="sc">$</span>data,</span>
 <span id="cb14-44"><a href="#cb14-44" tabindex="-1"></a>    <span class="at">gBuffer        =</span> gBuffer,</span>
 <span id="cb14-45"><a href="#cb14-45" tabindex="-1"></a>    <span class="at">ecoregions     =</span> ecos,</span>
-<span id="cb14-46"><a href="#cb14-46" tabindex="-1"></a>    <span class="at">idColumn       =</span> <span class="st">&quot;ECO_NAME&quot;</span></span>
-<span id="cb14-47"><a href="#cb14-47" tabindex="-1"></a>  )</span>
-<span id="cb14-48"><a href="#cb14-48" tabindex="-1"></a>  fcsex <span class="ot">&lt;-</span> <span class="fu">FCSex</span>(<span class="at">taxon =</span> taxon, <span class="at">srsex =</span> srsex, <span class="at">grsex =</span> grsex, <span class="at">ersex =</span> ersex)</span>
-<span id="cb14-49"><a href="#cb14-49" tabindex="-1"></a></span>
-<span id="cb14-50"><a href="#cb14-50" tabindex="-1"></a>  <span class="co"># 5. In-situ analysis</span></span>
-<span id="cb14-51"><a href="#cb14-51" tabindex="-1"></a>  srsin <span class="ot">&lt;-</span> <span class="fu">SRSin</span>(</span>
-<span id="cb14-52"><a href="#cb14-52" tabindex="-1"></a>    <span class="at">taxon          =</span> taxon,</span>
-<span id="cb14-53"><a href="#cb14-53" tabindex="-1"></a>    <span class="at">sdm            =</span> sdm_checked,</span>
-<span id="cb14-54"><a href="#cb14-54" tabindex="-1"></a>    <span class="at">occurrenceData =</span> occurrences<span class="sc">$</span>data,</span>
-<span id="cb14-55"><a href="#cb14-55" tabindex="-1"></a>    <span class="at">protectedAreas =</span> proArea_checked</span>
-<span id="cb14-56"><a href="#cb14-56" tabindex="-1"></a>  )</span>
-<span id="cb14-57"><a href="#cb14-57" tabindex="-1"></a>  grsin <span class="ot">&lt;-</span> <span class="fu">GRSin</span>(<span class="at">taxon =</span> taxon, <span class="at">sdm =</span> sdm_checked, <span class="at">protectedAreas =</span> proArea_checked)</span>
-<span id="cb14-58"><a href="#cb14-58" tabindex="-1"></a>  ersin <span class="ot">&lt;-</span> <span class="fu">ERSin</span>(</span>
-<span id="cb14-59"><a href="#cb14-59" tabindex="-1"></a>    <span class="at">taxon          =</span> taxon,</span>
-<span id="cb14-60"><a href="#cb14-60" tabindex="-1"></a>    <span class="at">sdm            =</span> sdm_checked,</span>
-<span id="cb14-61"><a href="#cb14-61" tabindex="-1"></a>    <span class="at">occurrenceData =</span> occurrences<span class="sc">$</span>data,</span>
-<span id="cb14-62"><a href="#cb14-62" tabindex="-1"></a>    <span class="at">protectedAreas =</span> proArea_checked,</span>
-<span id="cb14-63"><a href="#cb14-63" tabindex="-1"></a>    <span class="at">ecoregions     =</span> ecos,</span>
-<span id="cb14-64"><a href="#cb14-64" tabindex="-1"></a>    <span class="at">idColumn       =</span> <span class="st">&quot;ECO_NAME&quot;</span></span>
-<span id="cb14-65"><a href="#cb14-65" tabindex="-1"></a>  )</span>
-<span id="cb14-66"><a href="#cb14-66" tabindex="-1"></a>  fcsin   <span class="ot">&lt;-</span> <span class="fu">FCSin</span>(<span class="at">taxon =</span> taxon, <span class="at">srsin =</span> srsin, <span class="at">grsin =</span> grsin, <span class="at">ersin =</span> ersin)</span>
-<span id="cb14-67"><a href="#cb14-67" tabindex="-1"></a>  fcsmean <span class="ot">&lt;-</span> <span class="fu">FCSc_mean</span>(<span class="at">taxon =</span> taxon, <span class="at">fcsin =</span> fcsin, <span class="at">fcsex =</span> fcsex)</span>
-<span id="cb14-68"><a href="#cb14-68" tabindex="-1"></a></span>
-<span id="cb14-69"><a href="#cb14-69" tabindex="-1"></a>  <span class="co"># 6. Store results</span></span>
-<span id="cb14-70"><a href="#cb14-70" tabindex="-1"></a>  results_list[[taxon]] <span class="ot">&lt;-</span> <span class="fu">list</span>(</span>
-<span id="cb14-71"><a href="#cb14-71" tabindex="-1"></a>    <span class="at">srsex           =</span> srsex,</span>
-<span id="cb14-72"><a href="#cb14-72" tabindex="-1"></a>    <span class="at">occurrences     =</span> occurrences,</span>
-<span id="cb14-73"><a href="#cb14-73" tabindex="-1"></a>    <span class="at">sdm_checked     =</span> sdm_checked,</span>
-<span id="cb14-74"><a href="#cb14-74" tabindex="-1"></a>    <span class="at">proArea_checked =</span> proArea_checked,</span>
-<span id="cb14-75"><a href="#cb14-75" tabindex="-1"></a>    <span class="at">eco_checked     =</span> ecoregions,</span>
-<span id="cb14-76"><a href="#cb14-76" tabindex="-1"></a>    <span class="at">grsex           =</span> grsex,</span>
-<span id="cb14-77"><a href="#cb14-77" tabindex="-1"></a>    <span class="at">ersex           =</span> ersex,</span>
-<span id="cb14-78"><a href="#cb14-78" tabindex="-1"></a>    <span class="at">fcsex           =</span> fcsex,</span>
-<span id="cb14-79"><a href="#cb14-79" tabindex="-1"></a>    <span class="at">srsin           =</span> srsin,</span>
-<span id="cb14-80"><a href="#cb14-80" tabindex="-1"></a>    <span class="at">grsin           =</span> grsin,</span>
-<span id="cb14-81"><a href="#cb14-81" tabindex="-1"></a>    <span class="at">ersin           =</span> ersin,</span>
-<span id="cb14-82"><a href="#cb14-82" tabindex="-1"></a>    <span class="at">fcsin           =</span> fcsin,</span>
-<span id="cb14-83"><a href="#cb14-83" tabindex="-1"></a>    <span class="at">fcsmean         =</span> fcsmean</span>
-<span id="cb14-84"><a href="#cb14-84" tabindex="-1"></a>  )</span>
-<span id="cb14-85"><a href="#cb14-85" tabindex="-1"></a>}</span></code></pre></div>
+<span id="cb14-46"><a href="#cb14-46" tabindex="-1"></a>    <span class="at">idColumn       =</span> <span class="st">&quot;ECO_NAME&quot;</span>,</span>
+<span id="cb14-47"><a href="#cb14-47" tabindex="-1"></a>    <span class="at">limitByPoints  =</span> <span class="cn">FALSE</span></span>
+<span id="cb14-48"><a href="#cb14-48" tabindex="-1"></a>  )</span>
+<span id="cb14-49"><a href="#cb14-49" tabindex="-1"></a>  fcsex <span class="ot">&lt;-</span> <span class="fu">FCSex</span>(<span class="at">taxon =</span> taxon, <span class="at">srsex =</span> srsex, <span class="at">grsex =</span> grsex, <span class="at">ersex =</span> ersex)</span>
+<span id="cb14-50"><a href="#cb14-50" tabindex="-1"></a></span>
+<span id="cb14-51"><a href="#cb14-51" tabindex="-1"></a>  <span class="co"># 5. In-situ analysis</span></span>
+<span id="cb14-52"><a href="#cb14-52" tabindex="-1"></a>  srsin <span class="ot">&lt;-</span> <span class="fu">SRSin</span>(</span>
+<span id="cb14-53"><a href="#cb14-53" tabindex="-1"></a>    <span class="at">taxon          =</span> taxon,</span>
+<span id="cb14-54"><a href="#cb14-54" tabindex="-1"></a>    <span class="at">sdm            =</span> sdm_checked,</span>
+<span id="cb14-55"><a href="#cb14-55" tabindex="-1"></a>    <span class="at">occurrenceData =</span> occurrences<span class="sc">$</span>data,</span>
+<span id="cb14-56"><a href="#cb14-56" tabindex="-1"></a>    <span class="at">protectedAreas =</span> proArea_checked</span>
+<span id="cb14-57"><a href="#cb14-57" tabindex="-1"></a>  )</span>
+<span id="cb14-58"><a href="#cb14-58" tabindex="-1"></a>  grsin <span class="ot">&lt;-</span> <span class="fu">GRSin</span>(<span class="at">taxon =</span> taxon, <span class="at">sdm =</span> sdm_checked, <span class="at">protectedAreas =</span> proArea_checked)</span>
+<span id="cb14-59"><a href="#cb14-59" tabindex="-1"></a>  ersin <span class="ot">&lt;-</span> <span class="fu">ERSin</span>(</span>
+<span id="cb14-60"><a href="#cb14-60" tabindex="-1"></a>    <span class="at">taxon          =</span> taxon,</span>
+<span id="cb14-61"><a href="#cb14-61" tabindex="-1"></a>    <span class="at">sdm            =</span> sdm_checked,</span>
+<span id="cb14-62"><a href="#cb14-62" tabindex="-1"></a>    <span class="at">occurrenceData =</span> occurrences<span class="sc">$</span>data,</span>
+<span id="cb14-63"><a href="#cb14-63" tabindex="-1"></a>    <span class="at">protectedAreas =</span> proArea_checked,</span>
+<span id="cb14-64"><a href="#cb14-64" tabindex="-1"></a>    <span class="at">ecoregions     =</span> ecos,</span>
+<span id="cb14-65"><a href="#cb14-65" tabindex="-1"></a>    <span class="at">idColumn       =</span> <span class="st">&quot;ECO_NAME&quot;</span>,</span>
+<span id="cb14-66"><a href="#cb14-66" tabindex="-1"></a>    <span class="at">limitByPoints  =</span> <span class="cn">FALSE</span></span>
+<span id="cb14-67"><a href="#cb14-67" tabindex="-1"></a>  )</span>
+<span id="cb14-68"><a href="#cb14-68" tabindex="-1"></a>  fcsin   <span class="ot">&lt;-</span> <span class="fu">FCSin</span>(<span class="at">taxon =</span> taxon, <span class="at">srsin =</span> srsin, <span class="at">grsin =</span> grsin, <span class="at">ersin =</span> ersin)</span>
+<span id="cb14-69"><a href="#cb14-69" tabindex="-1"></a>  fcsmean <span class="ot">&lt;-</span> <span class="fu">FCSc_mean</span>(<span class="at">taxon =</span> taxon, <span class="at">fcsin =</span> fcsin, <span class="at">fcsex =</span> fcsex)</span>
+<span id="cb14-70"><a href="#cb14-70" tabindex="-1"></a></span>
+<span id="cb14-71"><a href="#cb14-71" tabindex="-1"></a>  <span class="co"># 6. Store results</span></span>
+<span id="cb14-72"><a href="#cb14-72" tabindex="-1"></a>  results_list[[taxon]] <span class="ot">&lt;-</span> <span class="fu">list</span>(</span>
+<span id="cb14-73"><a href="#cb14-73" tabindex="-1"></a>    <span class="at">srsex           =</span> srsex,</span>
+<span id="cb14-74"><a href="#cb14-74" tabindex="-1"></a>    <span class="at">occurrences     =</span> occurrences,</span>
+<span id="cb14-75"><a href="#cb14-75" tabindex="-1"></a>    <span class="at">sdm_checked     =</span> sdm_checked,</span>
+<span id="cb14-76"><a href="#cb14-76" tabindex="-1"></a>    <span class="at">proArea_checked =</span> proArea_checked,</span>
+<span id="cb14-77"><a href="#cb14-77" tabindex="-1"></a>    <span class="at">eco_checked     =</span> ecoregions,</span>
+<span id="cb14-78"><a href="#cb14-78" tabindex="-1"></a>    <span class="at">grsex           =</span> grsex,</span>
+<span id="cb14-79"><a href="#cb14-79" tabindex="-1"></a>    <span class="at">ersex           =</span> ersex,</span>
+<span id="cb14-80"><a href="#cb14-80" tabindex="-1"></a>    <span class="at">fcsex           =</span> fcsex,</span>
+<span id="cb14-81"><a href="#cb14-81" tabindex="-1"></a>    <span class="at">srsin           =</span> srsin,</span>
+<span id="cb14-82"><a href="#cb14-82" tabindex="-1"></a>    <span class="at">grsin           =</span> grsin,</span>
+<span id="cb14-83"><a href="#cb14-83" tabindex="-1"></a>    <span class="at">ersin           =</span> ersin,</span>
+<span id="cb14-84"><a href="#cb14-84" tabindex="-1"></a>    <span class="at">fcsin           =</span> fcsin,</span>
+<span id="cb14-85"><a href="#cb14-85" tabindex="-1"></a>    <span class="at">fcsmean         =</span> fcsmean</span>
+<span id="cb14-86"><a href="#cb14-86" tabindex="-1"></a>  )</span>
+<span id="cb14-87"><a href="#cb14-87" tabindex="-1"></a>}</span></code></pre></div>
 <pre><code>## A total of  139  out of the  139 contained records for  Cucurbita_cordata</code></pre>
 <pre><code>## Removed   0  records because lat values were outside the range of -90 to 90 or lonitude values were outside the range of -180-180 or there is a no value present for latitude or longitude for a record.</code></pre>
 <pre><code>## All checks completed
 ## All checks completed
 ## All checks completed</code></pre>
-<pre><code>## Warning: [vect] guessed crs</code></pre>
 <pre><code>## A total of  253  out of the  253 contained records for  Cucurbita_digitata</code></pre>
 <pre><code>## Removed   0  records because lat values were outside the range of -90 to 90 or lonitude values were outside the range of -180-180 or there is a no value present for latitude or longitude for a record.</code></pre>
 <pre><code>## All checks completed
 ## All checks completed
 ## All checks completed</code></pre>
-<pre><code>## Warning: [vect] guessed crs</code></pre>
 <pre><code>## A total of  811  out of the  811 contained records for  Cucurbita_palmata</code></pre>
 <pre><code>## Removed   0  records because lat values were outside the range of -90 to 90 or lonitude values were outside the range of -180-180 or there is a no value present for latitude or longitude for a record.</code></pre>
 <pre><code>## All checks completed
 ## All checks completed
 ## All checks completed</code></pre>
-<pre><code>## Warning: [vect] guessed crs</code></pre>
 <hr />
 </div>
 <div id="summary-metrics-tables" class="section level2">
@@ -828,47 +827,47 @@ R folder</a>.</strong></p>
 <p>Results are organized as a named list, allowing review of individual
 species metrics. The tables below summarize the main metrics for all
 species.</p>
-<div class="sourceCode" id="cb27"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb27-1"><a href="#cb27-1" tabindex="-1"></a><span class="co"># ── Ex-situ metrics ───────────────────────────────────────────────────────────</span></span>
-<span id="cb27-2"><a href="#cb27-2" tabindex="-1"></a>exsitu_table <span class="ot">&lt;-</span> <span class="fu">do.call</span>(rbind, <span class="fu">lapply</span>(<span class="fu">names</span>(results_list), <span class="cf">function</span>(taxon) {</span>
-<span id="cb27-3"><a href="#cb27-3" tabindex="-1"></a>  r <span class="ot">&lt;-</span> results_list[[taxon]]</span>
-<span id="cb27-4"><a href="#cb27-4" tabindex="-1"></a>  <span class="fu">data.frame</span>(</span>
-<span id="cb27-5"><a href="#cb27-5" tabindex="-1"></a>    <span class="at">Species          =</span> taxon,</span>
-<span id="cb27-6"><a href="#cb27-6" tabindex="-1"></a>    <span class="at">SRS_exsitu       =</span> r<span class="sc">$</span>srsex<span class="sc">$</span><span class="st">`</span><span class="at">SRS exsitu</span><span class="st">`</span>,</span>
-<span id="cb27-7"><a href="#cb27-7" tabindex="-1"></a>    <span class="at">GRS_exsitu       =</span> r<span class="sc">$</span>fcsex<span class="sc">$</span><span class="st">`</span><span class="at">GRS exsitu</span><span class="st">`</span>,</span>
-<span id="cb27-8"><a href="#cb27-8" tabindex="-1"></a>    <span class="at">ERS_exsitu       =</span> r<span class="sc">$</span>fcsex<span class="sc">$</span><span class="st">`</span><span class="at">ERS exsitu</span><span class="st">`</span>,</span>
-<span id="cb27-9"><a href="#cb27-9" tabindex="-1"></a>    <span class="at">FCS_exsitu       =</span> r<span class="sc">$</span>fcsex<span class="sc">$</span><span class="st">`</span><span class="at">FCS exsitu</span><span class="st">`</span>,</span>
-<span id="cb27-10"><a href="#cb27-10" tabindex="-1"></a>    <span class="at">FCS_exsitu_score =</span> r<span class="sc">$</span>fcsex<span class="sc">$</span><span class="st">`</span><span class="at">FCS exsitu score</span><span class="st">`</span></span>
-<span id="cb27-11"><a href="#cb27-11" tabindex="-1"></a>  )</span>
-<span id="cb27-12"><a href="#cb27-12" tabindex="-1"></a>}))</span>
-<span id="cb27-13"><a href="#cb27-13" tabindex="-1"></a></span>
-<span id="cb27-14"><a href="#cb27-14" tabindex="-1"></a><span class="co"># ── In-situ metrics ───────────────────────────────────────────────────────────</span></span>
-<span id="cb27-15"><a href="#cb27-15" tabindex="-1"></a>insitu_table <span class="ot">&lt;-</span> <span class="fu">do.call</span>(rbind, <span class="fu">lapply</span>(<span class="fu">names</span>(results_list), <span class="cf">function</span>(taxon) {</span>
-<span id="cb27-16"><a href="#cb27-16" tabindex="-1"></a>  r <span class="ot">&lt;-</span> results_list[[taxon]]</span>
-<span id="cb27-17"><a href="#cb27-17" tabindex="-1"></a>  <span class="fu">data.frame</span>(</span>
-<span id="cb27-18"><a href="#cb27-18" tabindex="-1"></a>    <span class="at">Species          =</span> taxon,</span>
-<span id="cb27-19"><a href="#cb27-19" tabindex="-1"></a>    <span class="at">SRS_insitu       =</span> r<span class="sc">$</span>fcsin<span class="sc">$</span><span class="st">`</span><span class="at">SRS insitu</span><span class="st">`</span>,</span>
-<span id="cb27-20"><a href="#cb27-20" tabindex="-1"></a>    <span class="at">GRS_insitu       =</span> r<span class="sc">$</span>fcsin<span class="sc">$</span><span class="st">`</span><span class="at">GRS insitu</span><span class="st">`</span>,</span>
-<span id="cb27-21"><a href="#cb27-21" tabindex="-1"></a>    <span class="at">ERS_insitu       =</span> r<span class="sc">$</span>fcsin<span class="sc">$</span><span class="st">`</span><span class="at">ERS insitu</span><span class="st">`</span>,</span>
-<span id="cb27-22"><a href="#cb27-22" tabindex="-1"></a>    <span class="at">FCS_insitu       =</span> r<span class="sc">$</span>fcsin<span class="sc">$</span><span class="st">`</span><span class="at">FCS insitu</span><span class="st">`</span>,</span>
-<span id="cb27-23"><a href="#cb27-23" tabindex="-1"></a>    <span class="at">FCS_insitu_score =</span> r<span class="sc">$</span>fcsin<span class="sc">$</span><span class="st">`</span><span class="at">FCS insitu score</span><span class="st">`</span></span>
-<span id="cb27-24"><a href="#cb27-24" tabindex="-1"></a>  )</span>
-<span id="cb27-25"><a href="#cb27-25" tabindex="-1"></a>}))</span>
-<span id="cb27-26"><a href="#cb27-26" tabindex="-1"></a></span>
-<span id="cb27-27"><a href="#cb27-27" tabindex="-1"></a><span class="co"># ── Combined metrics ──────────────────────────────────────────────────────────</span></span>
-<span id="cb27-28"><a href="#cb27-28" tabindex="-1"></a>combined_table <span class="ot">&lt;-</span> <span class="fu">do.call</span>(rbind, <span class="fu">lapply</span>(<span class="fu">names</span>(results_list), <span class="cf">function</span>(taxon) {</span>
-<span id="cb27-29"><a href="#cb27-29" tabindex="-1"></a>  r <span class="ot">&lt;-</span> results_list[[taxon]]</span>
-<span id="cb27-30"><a href="#cb27-30" tabindex="-1"></a>  <span class="fu">data.frame</span>(</span>
-<span id="cb27-31"><a href="#cb27-31" tabindex="-1"></a>    <span class="at">Species         =</span> taxon,</span>
-<span id="cb27-32"><a href="#cb27-32" tabindex="-1"></a>    <span class="at">FCSc_min        =</span> r<span class="sc">$</span>fcsmean<span class="sc">$</span>FCSc_min,</span>
-<span id="cb27-33"><a href="#cb27-33" tabindex="-1"></a>    <span class="at">FCSc_max        =</span> r<span class="sc">$</span>fcsmean<span class="sc">$</span>FCSc_max,</span>
-<span id="cb27-34"><a href="#cb27-34" tabindex="-1"></a>    <span class="at">FCSc_mean       =</span> r<span class="sc">$</span>fcsmean<span class="sc">$</span>FCSc_mean,</span>
-<span id="cb27-35"><a href="#cb27-35" tabindex="-1"></a>    <span class="at">FCSc_min_class  =</span> r<span class="sc">$</span>fcsmean<span class="sc">$</span>FCSc_min_class,</span>
-<span id="cb27-36"><a href="#cb27-36" tabindex="-1"></a>    <span class="at">FCSc_max_class  =</span> r<span class="sc">$</span>fcsmean<span class="sc">$</span>FCSc_max_class,</span>
-<span id="cb27-37"><a href="#cb27-37" tabindex="-1"></a>    <span class="at">FCSc_mean_class =</span> r<span class="sc">$</span>fcsmean<span class="sc">$</span>FCSc_mean_class</span>
-<span id="cb27-38"><a href="#cb27-38" tabindex="-1"></a>  )</span>
-<span id="cb27-39"><a href="#cb27-39" tabindex="-1"></a>}))</span>
-<span id="cb27-40"><a href="#cb27-40" tabindex="-1"></a></span>
-<span id="cb27-41"><a href="#cb27-41" tabindex="-1"></a>knitr<span class="sc">::</span><span class="fu">kable</span>(exsitu_table,   <span class="at">digits =</span> <span class="dv">2</span>, <span class="at">caption =</span> <span class="st">&quot;&lt;span style=&#39;text-align:left; display:block;&#39;&gt;Ex-situ gap analysis metrics&lt;/span&gt;&quot;</span>,  <span class="at">format =</span> <span class="st">&quot;html&quot;</span>) <span class="sc">%&gt;%</span> kableExtra<span class="sc">::</span><span class="fu">kable_styling</span>()</span></code></pre></div>
+<div class="sourceCode" id="cb24"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb24-1"><a href="#cb24-1" tabindex="-1"></a><span class="co"># ── Ex-situ metrics ───────────────────────────────────────────────────────────</span></span>
+<span id="cb24-2"><a href="#cb24-2" tabindex="-1"></a>exsitu_table <span class="ot">&lt;-</span> <span class="fu">do.call</span>(rbind, <span class="fu">lapply</span>(<span class="fu">names</span>(results_list), <span class="cf">function</span>(taxon) {</span>
+<span id="cb24-3"><a href="#cb24-3" tabindex="-1"></a>  r <span class="ot">&lt;-</span> results_list[[taxon]]</span>
+<span id="cb24-4"><a href="#cb24-4" tabindex="-1"></a>  <span class="fu">data.frame</span>(</span>
+<span id="cb24-5"><a href="#cb24-5" tabindex="-1"></a>    <span class="at">Species          =</span> taxon,</span>
+<span id="cb24-6"><a href="#cb24-6" tabindex="-1"></a>    <span class="at">SRS_exsitu       =</span> r<span class="sc">$</span>srsex<span class="sc">$</span><span class="st">`</span><span class="at">SRS exsitu</span><span class="st">`</span>,</span>
+<span id="cb24-7"><a href="#cb24-7" tabindex="-1"></a>    <span class="at">GRS_exsitu       =</span> r<span class="sc">$</span>fcsex<span class="sc">$</span><span class="st">`</span><span class="at">GRS exsitu</span><span class="st">`</span>,</span>
+<span id="cb24-8"><a href="#cb24-8" tabindex="-1"></a>    <span class="at">ERS_exsitu       =</span> r<span class="sc">$</span>fcsex<span class="sc">$</span><span class="st">`</span><span class="at">ERS exsitu</span><span class="st">`</span>,</span>
+<span id="cb24-9"><a href="#cb24-9" tabindex="-1"></a>    <span class="at">FCS_exsitu       =</span> r<span class="sc">$</span>fcsex<span class="sc">$</span><span class="st">`</span><span class="at">FCS exsitu</span><span class="st">`</span>,</span>
+<span id="cb24-10"><a href="#cb24-10" tabindex="-1"></a>    <span class="at">FCS_exsitu_score =</span> r<span class="sc">$</span>fcsex<span class="sc">$</span><span class="st">`</span><span class="at">FCS exsitu score</span><span class="st">`</span></span>
+<span id="cb24-11"><a href="#cb24-11" tabindex="-1"></a>  )</span>
+<span id="cb24-12"><a href="#cb24-12" tabindex="-1"></a>}))</span>
+<span id="cb24-13"><a href="#cb24-13" tabindex="-1"></a></span>
+<span id="cb24-14"><a href="#cb24-14" tabindex="-1"></a><span class="co"># ── In-situ metrics ───────────────────────────────────────────────────────────</span></span>
+<span id="cb24-15"><a href="#cb24-15" tabindex="-1"></a>insitu_table <span class="ot">&lt;-</span> <span class="fu">do.call</span>(rbind, <span class="fu">lapply</span>(<span class="fu">names</span>(results_list), <span class="cf">function</span>(taxon) {</span>
+<span id="cb24-16"><a href="#cb24-16" tabindex="-1"></a>  r <span class="ot">&lt;-</span> results_list[[taxon]]</span>
+<span id="cb24-17"><a href="#cb24-17" tabindex="-1"></a>  <span class="fu">data.frame</span>(</span>
+<span id="cb24-18"><a href="#cb24-18" tabindex="-1"></a>    <span class="at">Species          =</span> taxon,</span>
+<span id="cb24-19"><a href="#cb24-19" tabindex="-1"></a>    <span class="at">SRS_insitu       =</span> r<span class="sc">$</span>fcsin<span class="sc">$</span><span class="st">`</span><span class="at">SRS insitu</span><span class="st">`</span>,</span>
+<span id="cb24-20"><a href="#cb24-20" tabindex="-1"></a>    <span class="at">GRS_insitu       =</span> r<span class="sc">$</span>fcsin<span class="sc">$</span><span class="st">`</span><span class="at">GRS insitu</span><span class="st">`</span>,</span>
+<span id="cb24-21"><a href="#cb24-21" tabindex="-1"></a>    <span class="at">ERS_insitu       =</span> r<span class="sc">$</span>fcsin<span class="sc">$</span><span class="st">`</span><span class="at">ERS insitu</span><span class="st">`</span>,</span>
+<span id="cb24-22"><a href="#cb24-22" tabindex="-1"></a>    <span class="at">FCS_insitu       =</span> r<span class="sc">$</span>fcsin<span class="sc">$</span><span class="st">`</span><span class="at">FCS insitu</span><span class="st">`</span>,</span>
+<span id="cb24-23"><a href="#cb24-23" tabindex="-1"></a>    <span class="at">FCS_insitu_score =</span> r<span class="sc">$</span>fcsin<span class="sc">$</span><span class="st">`</span><span class="at">FCS insitu score</span><span class="st">`</span></span>
+<span id="cb24-24"><a href="#cb24-24" tabindex="-1"></a>  )</span>
+<span id="cb24-25"><a href="#cb24-25" tabindex="-1"></a>}))</span>
+<span id="cb24-26"><a href="#cb24-26" tabindex="-1"></a></span>
+<span id="cb24-27"><a href="#cb24-27" tabindex="-1"></a><span class="co"># ── Combined metrics ──────────────────────────────────────────────────────────</span></span>
+<span id="cb24-28"><a href="#cb24-28" tabindex="-1"></a>combined_table <span class="ot">&lt;-</span> <span class="fu">do.call</span>(rbind, <span class="fu">lapply</span>(<span class="fu">names</span>(results_list), <span class="cf">function</span>(taxon) {</span>
+<span id="cb24-29"><a href="#cb24-29" tabindex="-1"></a>  r <span class="ot">&lt;-</span> results_list[[taxon]]</span>
+<span id="cb24-30"><a href="#cb24-30" tabindex="-1"></a>  <span class="fu">data.frame</span>(</span>
+<span id="cb24-31"><a href="#cb24-31" tabindex="-1"></a>    <span class="at">Species         =</span> taxon,</span>
+<span id="cb24-32"><a href="#cb24-32" tabindex="-1"></a>    <span class="at">FCSc_min        =</span> r<span class="sc">$</span>fcsmean<span class="sc">$</span>FCSc_min,</span>
+<span id="cb24-33"><a href="#cb24-33" tabindex="-1"></a>    <span class="at">FCSc_max        =</span> r<span class="sc">$</span>fcsmean<span class="sc">$</span>FCSc_max,</span>
+<span id="cb24-34"><a href="#cb24-34" tabindex="-1"></a>    <span class="at">FCSc_mean       =</span> r<span class="sc">$</span>fcsmean<span class="sc">$</span>FCSc_mean,</span>
+<span id="cb24-35"><a href="#cb24-35" tabindex="-1"></a>    <span class="at">FCSc_min_class  =</span> r<span class="sc">$</span>fcsmean<span class="sc">$</span>FCSc_min_class,</span>
+<span id="cb24-36"><a href="#cb24-36" tabindex="-1"></a>    <span class="at">FCSc_max_class  =</span> r<span class="sc">$</span>fcsmean<span class="sc">$</span>FCSc_max_class,</span>
+<span id="cb24-37"><a href="#cb24-37" tabindex="-1"></a>    <span class="at">FCSc_mean_class =</span> r<span class="sc">$</span>fcsmean<span class="sc">$</span>FCSc_mean_class</span>
+<span id="cb24-38"><a href="#cb24-38" tabindex="-1"></a>  )</span>
+<span id="cb24-39"><a href="#cb24-39" tabindex="-1"></a>}))</span>
+<span id="cb24-40"><a href="#cb24-40" tabindex="-1"></a></span>
+<span id="cb24-41"><a href="#cb24-41" tabindex="-1"></a>knitr<span class="sc">::</span><span class="fu">kable</span>(exsitu_table,   <span class="at">digits =</span> <span class="dv">2</span>, <span class="at">caption =</span> <span class="st">&quot;&lt;span style=&#39;text-align:left; display:block;&#39;&gt;Ex-situ gap analysis metrics&lt;/span&gt;&quot;</span>,  <span class="at">format =</span> <span class="st">&quot;html&quot;</span>) <span class="sc">%&gt;%</span> kableExtra<span class="sc">::</span><span class="fu">kable_styling</span>()</span></code></pre></div>
 <table class="table" style="margin-left: auto; margin-right: auto;">
 <caption>
 <span style="text-align:left; display:block;">Ex-situ gap analysis
@@ -908,10 +907,10 @@ Cucurbita_cordata
 9.75
 </td>
 <td style="text-align:right;">
-25
+22.22
 </td>
 <td style="text-align:right;">
-11.82
+10.90
 </td>
 <td style="text-align:left;">
 UP
@@ -928,7 +927,7 @@ Cucurbita_digitata
 25.95
 </td>
 <td style="text-align:right;">
-40
+40.00
 </td>
 <td style="text-align:right;">
 24.69
@@ -948,7 +947,7 @@ Cucurbita_palmata
 30.52
 </td>
 <td style="text-align:right;">
-50
+50.00
 </td>
 <td style="text-align:right;">
 28.21
@@ -959,7 +958,7 @@ HP
 </tr>
 </tbody>
 </table>
-<div class="sourceCode" id="cb28"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb28-1"><a href="#cb28-1" tabindex="-1"></a>knitr<span class="sc">::</span><span class="fu">kable</span>(insitu_table,   <span class="at">digits =</span> <span class="dv">2</span>, <span class="at">caption =</span> <span class="st">&quot;&lt;span style=&#39;text-align:left; display:block;&#39;&gt;In-situ gap analysis metrics&lt;/span&gt;&quot;</span>,   <span class="at">format =</span> <span class="st">&quot;html&quot;</span>) <span class="sc">%&gt;%</span> kableExtra<span class="sc">::</span><span class="fu">kable_styling</span>()</span></code></pre></div>
+<div class="sourceCode" id="cb25"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb25-1"><a href="#cb25-1" tabindex="-1"></a>knitr<span class="sc">::</span><span class="fu">kable</span>(insitu_table,   <span class="at">digits =</span> <span class="dv">2</span>, <span class="at">caption =</span> <span class="st">&quot;&lt;span style=&#39;text-align:left; display:block;&#39;&gt;In-situ gap analysis metrics&lt;/span&gt;&quot;</span>,   <span class="at">format =</span> <span class="st">&quot;html&quot;</span>) <span class="sc">%&gt;%</span> kableExtra<span class="sc">::</span><span class="fu">kable_styling</span>()</span></code></pre></div>
 <table class="table" style="margin-left: auto; margin-right: auto;">
 <caption>
 <span style="text-align:left; display:block;">In-situ gap analysis
@@ -1050,7 +1049,7 @@ MP
 </tr>
 </tbody>
 </table>
-<div class="sourceCode" id="cb29"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb29-1"><a href="#cb29-1" tabindex="-1"></a>knitr<span class="sc">::</span><span class="fu">kable</span>(combined_table, <span class="at">digits =</span> <span class="dv">2</span>, <span class="at">caption =</span> <span class="st">&quot;&lt;span style=&#39;text-align:left; display:block;&#39;&gt;Combined gap analysis metrics&lt;/span&gt;&quot;</span>,  <span class="at">format =</span> <span class="st">&quot;html&quot;</span>) <span class="sc">%&gt;%</span> kableExtra<span class="sc">::</span><span class="fu">kable_styling</span>()</span></code></pre></div>
+<div class="sourceCode" id="cb26"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb26-1"><a href="#cb26-1" tabindex="-1"></a>knitr<span class="sc">::</span><span class="fu">kable</span>(combined_table, <span class="at">digits =</span> <span class="dv">2</span>, <span class="at">caption =</span> <span class="st">&quot;&lt;span style=&#39;text-align:left; display:block;&#39;&gt;Combined gap analysis metrics&lt;/span&gt;&quot;</span>,  <span class="at">format =</span> <span class="st">&quot;html&quot;</span>) <span class="sc">%&gt;%</span> kableExtra<span class="sc">::</span><span class="fu">kable_styling</span>()</span></code></pre></div>
 <table class="table" style="margin-left: auto; margin-right: auto;">
 <caption>
 <span style="text-align:left; display:block;">Combined gap analysis
@@ -1087,13 +1086,13 @@ FCSc_mean_class
 Cucurbita_cordata
 </td>
 <td style="text-align:right;">
-11.82
+10.90
 </td>
 <td style="text-align:right;">
 72.15
 </td>
 <td style="text-align:right;">
-41.99
+41.53
 </td>
 <td style="text-align:left;">
 UP

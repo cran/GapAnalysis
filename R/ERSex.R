@@ -8,11 +8,14 @@
 #'
 #' @param taxon A character object that defines the name of the species as listed in the occurrence dataset
 #' @param sdm a terra rast object that represented the expected distribution of the species
-#' @param occurrenceData a data frame of values containing columns for the taxon, latitude, longitude, and type
+#' @param occurrenceData a data frame of values containing columns for the taxon, latitude, longitude, and type. Coordinates are assumed to be in the WGS84 (EPSG:4326) coordinate reference system.
 #' @param gBuffer A terra vect which encompases a specific buffer distance around all G points
 #' @param ecoregions A terra vect object the contains spatial information on all ecoregions of interests
 #' @param idColumn A character vector that notes what column within the ecoregions object should be used as a unique ID
-#'
+#' @param limitByPoints A boolean parameter (TRUE/FALSE) to determine if you want to limit the ecoregions considered to those with observations present.
+#' TRUE will exclude all ecoregions with no points within. FALSE will include all ecoregions.
+#' This was implemented to prevent edge effects where pixels from the distribution extend into
+#' neighboring ecoregions as a product of differences in raster/vector geometry rather than being predicted there directly.
 #'
 #'
 #' @return A list object containing
@@ -30,8 +33,8 @@
 #' data(ecoregions)
 #'
 #' # convert the dataset for function
-#' taxon <- "Cucurbita_cordata"
-#' sdm <- terra::unwrap(CucurbitaRasts)$cordata
+#' taxon <- "Cucurbita_digitata"
+#' sdm <- terra::unwrap(CucurbitaRasts)$digitata
 #' ecoregions <- terra::vect(ecoregions)
 #' #Running generateGBuffers
 #' gBuffer <- generateGBuffers(taxon = taxon,
@@ -44,7 +47,8 @@
 #'                     occurrenceData = CucurbitaData,
 #'                    gBuffer = gBuffer,
 #'                    ecoregions = ecoregions,
-#'                    idColumn = "ECO_NAME"
+#'                    idColumn = "ECO_NAME",
+#'                    limitByPoints = FALSE
 #'                    )
 #'
 #'
@@ -56,7 +60,15 @@
 #' @importFrom leaflet addTiles addPolygons addLegend addRasterImage addCircleMarkers
 #' @export
 
-ERSex <- function(taxon, sdm, occurrenceData, gBuffer, ecoregions, idColumn) {
+ERSex <- function(
+  taxon,
+  sdm,
+  occurrenceData,
+  gBuffer,
+  ecoregions,
+  idColumn,
+  limitByPoints = FALSE
+) {
   # filter the occurrence data to the species of interest
   d1 <- occurrenceData |>
     dplyr::filter(occurrenceData$species == taxon) |>
@@ -66,11 +78,12 @@ ERSex <- function(taxon, sdm, occurrenceData, gBuffer, ecoregions, idColumn) {
     )
   # add color
   d1$color <- ifelse(d1$type == "H", yes = "#1184d4", no = "#6300f0")
+  # limit ecoregions to point locations
+  if (isTRUE(limitByPoints)) {
+    ecoregions <- ecoregions[d1, ]
+  }
   # set id column for easier indexing
   ecoregions$id_column <- as.data.frame(ecoregions)[[idColumn]]
-  # aggregates spatial features
-  ecoregions <- terra::aggregate(x = ecoregions, by = "id_column")
-
   # determine the eco regions present in the
   ## crop ecos
   ecoregions <- terra::crop(ecoregions, sdm)
