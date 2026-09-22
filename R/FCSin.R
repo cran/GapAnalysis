@@ -8,6 +8,9 @@
 #' @param srsin A dataframe contain the results from the srsin function
 #' @param grsin A dataframe contain the results from the grsin function
 #' @param ersin A dataframe contain the results from the ersin function
+#' @param noModel A boolean parameter (TRUE/FALSE) to determine if there is a species distribution model. Default is FALSE.
+#'   When TRUE, GRS and ERS cannot be calculated and are assigned 0; the final score is the mean of the three metrics,
+#'   following Khoury et al. (2019).
 #'
 #' @return out_df : a data frames of values summarizing the results of the function
 #'
@@ -63,24 +66,34 @@
 #' @importFrom dplyr tibble
 #' @export
 
-FCSin <- function(taxon, srsin, grsin, ersin){
+
+FCSin <- function(taxon, srsin, grsin, ersin, noModel = FALSE){
   # define variables
   srs <- srsin$results$`SRS insitu`
-  grs <- grsin$results$`GRS insitu`
-  ers <- ersin$results$`ERS insitu`
 
+  if (isTRUE(noModel)) {
+    # no distribution model: GRS and ERS cannot be calculated and are set to 0
+    # so the final score remains the mean of the three metrics (Khoury et al. 2019)
+    grs <- 0
+    ers <- 0
+  } else {
+    grs <- grsin$results$`GRS insitu`
+    ers <- ersin$results$`ERS insitu`
+  }
 
-  # calculate the mean across the three measures
-  sp_fcs <- mean(c(srs,grs,ers), na.rm=TRUE)
+  # mean across the three measures
+  sp_fcs <- mean(c(srs, grs, ers), na.rm = TRUE)
 
-  out_df <- dplyr::tibble(Taxon=taxon,
-                       "SRS insitu" = srs,
-                       "GRS insitu"= grs,
-                       "ERS insitu" = ers,
-                       "FCS insitu" = sp_fcs,
-                       "FCS insitu score" = NA)
+  out_df <- dplyr::tibble(Taxon = taxon,
+                          "SRS insitu" = srs,
+                          "GRS insitu" = grs,
+                          "ERS insitu" = ers,
+                          "FCS insitu" = sp_fcs,
+                          "FCS insitu score" = NA)
 
-  #assign classes (min)
+  sp_fcs <- out_df$"FCS insitu"
+
+  # assign classes
   if (sp_fcs < 25) {
     score <- "UP"
   } else if (sp_fcs >= 25 & sp_fcs < 50) {
@@ -90,6 +103,7 @@ FCSin <- function(taxon, srsin, grsin, ersin){
   } else {
     score <- "LP"
   }
+
   out_df$"FCS insitu score" <- score
   return(out_df)
 }

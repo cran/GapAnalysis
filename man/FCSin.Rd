@@ -4,7 +4,7 @@
 \alias{FCSin}
 \title{Final conservation score in situ}
 \usage{
-FCSin(taxon, srsin, grsin, ersin)
+FCSin(taxon, srsin, grsin, ersin, noModel = FALSE)
 }
 \arguments{
 \item{taxon}{A character object that defines the name of the species as listed in the occurrence dataset}
@@ -14,6 +14,10 @@ FCSin(taxon, srsin, grsin, ersin)
 \item{grsin}{A dataframe contain the results from the grsin function}
 
 \item{ersin}{A dataframe contain the results from the ersin function}
+
+\item{noModel}{A boolean parameter (TRUE/FALSE) to determine if there is a species distribution model. Default is FALSE.
+When TRUE, GRS and ERS cannot be calculated and are assigned 0; the final score is the mean of the three metrics,
+following Khoury et al. (2019).}
 }
 \value{
 out_df : a data frames of values summarizing the results of the function
